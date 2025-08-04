@@ -4,7 +4,7 @@ authors = [
     { name = "Thiago Dias", email = "thiago@thir.info" },
     { name = "Lucas Infante", email = "maccinza@gmail.com" }
 ]
-version = "0.1.0"
+version = "0.1.1"
 description = """This project serves as a shared foundation for linters, formatters, and general utilities in Python projects."""
 readme = "README.md"
 license = "Apache-2.0"
