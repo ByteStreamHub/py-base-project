@@ -12,6 +12,11 @@ on:
           - major
           - minor
           - patch
+      build_and_upload:
+        description: 'Build and upload wheel files to S3'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -47,8 +52,35 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          # Get user info from the GitHub API
+          USER_NAME=$(curl -s -H "Authorization: token ${{ github.token }}" \
+            "https://api.github.com/users/${{ github.actor }}" | jq -r '.name // "${{ github.actor }}"')
+          USER_EMAIL=$(curl -s -H "Authorization: token ${{ github.token }}" \
+            "https://api.github.com/users/${{ github.actor }}" | jq -r '.email // "${{ github.actor }}@users.noreply.github.com"')
+          
+          # Use the triggering user's info or fallback to defaults if not available
+          git config --global user.name "${USER_NAME}"
+          git config --global user.email "${USER_EMAIL}"
 
       - name: Execute Release Process
         run: make release-${{ github.event.inputs.version_bump }}
+        
+      - name: Build Project
+        if: ${{ github.event.inputs.build_and_upload == true }}
+        run: make build
+      
+      - name: Configure AWS credentials
+        if: ${{ github.event.inputs.build_and_upload == true }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+        
+      - name: Upload to S3
+        if: ${{ github.event.inputs.build_and_upload == true }}
+        run: |
+          echo "Uploading wheel files to S3 bucket"
+          aws s3 cp dist/python_base_project-latest.whl s3://${{ vars.S3_BUCKET_NAME }}/
+          VERSION=$(uv version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          aws s3 cp dist/python_base_project-$VERSION.whl s3://${{ vars.S3_BUCKET_NAME }}/
