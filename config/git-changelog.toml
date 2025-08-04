@@ -1,0 +1,21 @@
+convention="conventional"
+provider="github"
+template="keepachangelog"
+sections = [
+    "build",
+    "deps",
+    "feat",
+    "fix",
+    "refactor",
+    "chore",
+    "revert",
+    "ref",
+    "refactor",
+    "perf",
+    "ci",
+    "deps",
+    "doc",
+    "docs",
+    "style",
+    "test"
+]
