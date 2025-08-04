@@ -47,7 +47,7 @@ GIT-CHANGELOG-VERSION-TE 	= ${PACKAGE_MANAGER_RUN} git-changelog --style convent
 ## pre-commit
 PRE-COMMIT-RUN-ALL-FILES	= ${PACKAGE_MANAGER_RUN}  pre-commit run --all-files
 
-.PHONY: help check clean format generate-docs generate-docs-local install changelog-generate changelog-preview local-dev-config install-all install-python install-uv lint print-header print-footer test release release-major release-minor release-patch pre-commit-all-files
+.PHONY: help check clean format generate-docs generate-docs-local install changelog-generate changelog-preview local-dev-config install-all install-python install-uv lint print-header print-footer test release release-major release-minor release-patch pre-commit-all-files build
 
 help:
 	@echo ""
@@ -67,6 +67,7 @@ help:
 	@echo "  make test           	: Run tests with coverage"
 	@echo "  make check          	: Run format, lint, and test"
 	@echo "  make clean          	: Clean project artifacts"
+	@echo "  make build          	: Build the project and create version and latest files"
 	@echo ""
 	@echo "Project Management:"
 	@echo "  make changelog-generate 	: Generate changelog from git history using git-changelog"
@@ -141,7 +142,7 @@ generate-docs-local:  print-header
 install: clean print-header
 	@echo "Install dependencies using package manager..."
 	@echo ""
-	@${PACKAGE_MANAGER} sync --link-mode=copy
+	@${PACKAGE_MANAGER} sync --link-mode=copy --upgrade
 	@echo ""
 	@echo "..Install and configure pre-commit...."
 	@echo ""
@@ -262,4 +263,22 @@ release-patch: print-header
 	@echo "Starting release (patch version bump)..."
 	@echo ""
 	$(call do_release,patch)
+	@make print-footer
+
+.ONESHELL:
+build: print-header
+	@echo "Building project..."
+	@echo ""
+	@${PACKAGE_MANAGER} build
+	@echo ""
+	@echo "Creating version and latest files..."
+	@VERSION=$$(${PACKAGE_MANAGER} version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+	@echo "Version: $$VERSION"
+	@cp dist/python_base_project-$$VERSION.tar.gz dist/python_base_project-$$VERSION
+	@cp dist/python_base_project-$$VERSION dist/python_base_project-latest.whl
+	@echo ""
+	@echo "Build completed successfully!"
+	@echo "Created whl files:"
+	@echo "  - dist/python_base_project-$$VERSION"
+	@echo "  - dist/python_base_project-latest"
 	@make print-footer
