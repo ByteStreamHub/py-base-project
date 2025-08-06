@@ -7,7 +7,7 @@ $(shell echo "py$(subst .,,$(1))")
 endef
 
 # PYTHON
-PYTHON_VERSION := $(shell cat ./config/.python-version)
+PYTHON_VERSION := 3.11
 
 # PROJECT
 
@@ -32,7 +32,6 @@ PACKAGE_MANAGER_RUN 		= ${PACKAGE_MANAGER} run
 
 ## Ruff linter
 RUFF 						= ${PACKAGE_MANAGER_RUN} ruff --config $(RUFF_CONFIG_FILE)
-RUFF-ARGS 					= --target-version $(call format_py_version,$(PYTHON_VERSION)) -n
 
 ## Pyright linter
 PYRIGHT						= ${PACKAGE_MANAGER_RUN} pyright -p ${SOURCE_DIR}
@@ -52,7 +51,7 @@ PRE-COMMIT-RUN-ALL-FILES	= ${PACKAGE_MANAGER_RUN}  pre-commit run --all-files
 help:
 	@echo ""
 	@echo "Commons module commands"
-	@echo "Using python: $(call format_py_version,$(PYTHON_VERSION))"
+	@echo "Using python: $(PYTHON_VERSION)"
 	@echo ""
 	@echo "Development:"
 	@echo "  make install        	: Clean install of dependencies"
@@ -107,7 +106,7 @@ local-dev-config: print-header
 	@echo "### Install Python"
 	@make install-python
 	@echo "### Configure virtual environment"
-	@${PACKAGE_MANAGER} venv ${VENV_DIR} --allow-existing --trusted-host localhost --color auto --python python${PYTHON_VERSION}
+	@${PACKAGE_MANAGER} venv ${VENV_DIR} --allow-existing --trusted-host localhost --color auto --python ${PYTHON_VERSION}
 	@echo "### Install project dependencies"
 	@make install
 	@echo ""
@@ -117,8 +116,8 @@ local-dev-config: print-header
 format: print-header
 	@echo "Starting ruff check..."
 	@echo ""
-	@${RUFF} format ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} ${RUFF-ARGS} -v
-	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR}  ${RUFF-ARGS} -v --fix
+	@${RUFF} format ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v
+	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v --fix
 	@echo ""
 	@echo "...ending ruff check!"
 	@make print-footer
@@ -169,7 +168,7 @@ lint: print-header
 	@echo "Starting ruff check..."
 	@echo ""
 	@echo "SRC :: ${SOURCE_DIR}"
-	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR}  ${RUFF-ARGS} -v
+	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR}  -v
 	@${PYRIGHT}
 	@echo ""
 	@echo "...ending ruff check!"
@@ -196,12 +195,7 @@ print-footer:
 test: print-header
 	@echo "Running unit tests..."
 	@echo ""
-	@if find tests -type f -name "test_*.py" | grep -q .; then \
-		PYTHONPATH=src ${PACKAGE_MANAGER_RUN} pytest -v -s --log-level=DEBUG --color=auto --code-highlight=yes --cov=${SOURCE_DIR} --cov-report=xml --cov-fail-under=80; \
-	else \
-		echo "No test files found, skipping tests."; \
-		echo "" >> coverage.xml; \
-	fi
+	@PYTHONPATH=src ${PACKAGE_MANAGER_RUN} pytest -v -s --log-level=DEBUG --color=auto --code-highlight=yes --cov=${SOURCE_DIR} --cov-report=xml --cov-fail-under=80
 	@echo ""
 	@echo "...ending unit tests!"
 	@make print-footer
