@@ -1,10 +1,10 @@
 """Basic logging class for logging in JSON format."""
 
 import logging
-import uuid
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, TypeVar
+from uuid import uuid4
 
 import structlog
 
@@ -59,7 +59,6 @@ class BasicLogger:
                 structlog.contextvars.merge_contextvars,
                 structlog.processors.add_log_level,
                 structlog.processors.StackInfoRenderer(),
-                # structlog.processors.JSONRenderer(),
                 structlog.dev.set_exc_info,
                 structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=True),
                 structlog.dev.ConsoleRenderer(),
@@ -70,7 +69,7 @@ class BasicLogger:
             cache_logger_on_first_use=False,
         )
 
-        self._uuid = logger_uuid or str(uuid.uuid4())
+        self._uuid = logger_uuid or str(uuid4())
         self._log = structlog.get_logger()
 
     @staticmethod
