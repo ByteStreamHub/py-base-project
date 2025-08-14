@@ -29,16 +29,18 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-def get_logger(log_level: LogLevel = LogLevel.DEBUG) -> "BasicLogger":
+def get_logger(log_level: LogLevel = LogLevel.DEBUG) -> "Logger":
     """Get logger with default parameters."""
-    return BasicLogger(log_level=log_level)
+    return Logger(log_level=log_level)
 
 
-class BasicLogger:
+class Logger:
     """Basic logging class for logging in JSON format."""
 
     def __init__(
-        self, log_level: LogLevel = LogLevel.DEBUG, logger_uuid: str | None = None
+        self,
+        log_level: LogLevel = LogLevel.DEBUG,
+        logger_uuid: str | None = None,
     ) -> None:
         """
         Configures and initializes a structured logging system, setting up logging

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 # PYTHON
-PYTHON_VERSION := 3.10
+PYTHON_VERSION := {{ python_version | default(3.10, false) }}
 
 # PROJECT
 
@@ -170,7 +170,7 @@ lint: print-header
 
 pre-commit-all-files: print-header
 	@echo "pre-commit run for all files for validation..."
-	@${PRE-COMMIT-RUN-ALL-FILES}
+	@${PRE-COMMIT-RUN-ALL-FILES} --retry-on-failure
 	@echo "...pre-commit run for all files for validation executed!"
 	@make print-footer
 
@@ -270,3 +270,4 @@ build: print-header
 	@echo "  - dist/python_base_project-$$VERSION"
 	@echo "  - dist/python_base_project-latest"
 	@make print-footer
+{{ "\n" }}

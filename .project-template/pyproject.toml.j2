@@ -1,0 +1,58 @@
+[project]
+name = "{{ project_name | default('project', false) }}"
+authors = [
+    { name = "{{ author.name | default('Project Author', false) }}", email = "{{ author.email | default('author@email.com', false) }}" }
+]
+maintainers = [
+    { name = "{{ maintainer.name | default('Project Author', false) }}", email = "{{ maintainer.email | default('author@email.com', false) }}" }
+]
+version = "0.0.1"
+description = "{{ project_description | default('project description', false) }}"
+readme = "README.md"
+
+requires-python = ">={{ requires_python_version | default('3.10', false) }}"
+
+dependencies = [
+    {%- for dep in dependencies %}
+    {{ "\n" }} "{{ dep }}",
+    {%- endfor %}
+    {{ "\n" }}
+]
+
+[dependency-groups]
+dev = [
+    {%- for dep in dev_dependencies %}
+    {{ "\n" }} "{{ dep }}",
+    {%- endfor %}
+    {{ "\n" }}
+]
+
+[tool.pyright]
+include = ["src"]
+exclude = [
+    "**/__pycache__",
+    "src/experimental",
+    "src/typestubs",
+    "local-dev",
+]
+defineConstant = { DEBUG = true }
+stubPath = "src/stubs"
+
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+
+pythonVersion = "{{ python_version | default(3.10, false) }}"
+
+executionEnvironments = [
+  { root = "src" }
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include  = ["*"]
+{{ "\n" }}

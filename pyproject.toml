@@ -1,37 +1,35 @@
 [project]
-name = "python_base_project"
+name = "py_base_project"
 authors = [
-    { name = "Thiago Dias", email = "thiago@thir.info" },
-    { name = "Lucas Infante", email = "maccinza@gmail.com" }
+    { name = "ByteStreamHub team", email = "thiago@thir.info" }
+]
+maintainers = [
+    { name = "Thiago Augusto Dias", email = "thiago@thir.info" }
 ]
 version = "0.1.1"
-description = """This project serves as a shared foundation for linters, formatters, and general utilities in Python projects."""
+description = "This project is a framework to be a template for Python projects."
 readme = "README.md"
-license = "Apache-2.0"
 
 requires-python = ">=3.10"
-dependencies = [
-    "structlog>=25.4.0",
-]
 
-[project.urls]
-Homepage = "https://github.com/ByteStreamHub/py-base-project"
-Repository = "https://github.com/ByteStreamHub/py-base-project.git"
-Documentation = "https://bytestreamhub.github.io/py-base-project/"
+dependencies = [
+ "aws-cdk-aws-appsync-alpha>=2.59.0a0",
+ "aws-cdk-lib>=2.210.0",
+ "jinja2>=3.1.6",
+ "structlog>=25.4.0",
+]
 
 [dependency-groups]
 dev = [
-    "mkdocs-material>=9.6.16",
-    "mkdocstrings[python]>=0.30.0",
-    "pymdown-extensions>=10.16.1",
-    "pyright>=1.1.403",
-    "commitizen>=4.8.3",
-    "pre-commit>=4.2.0",
-    "pytest-cov>=6.2.1",
-    "setuptools>=61.0",
-    "pytest>=8.4.1",
-    "ruff>=0.12.7",
-    "git-changelog>=1.0.0",
+ "pyright>=1.1.403",
+ "commitizen>=4.8.3",
+ "pre-commit>=4.2.0",
+ "pytest-cov>=6.2.1",
+ "setuptools>=61.0",
+ "pytest>=8.4.1",
+ "ruff>=0.12.7",
+ "git-changelog>=1.0.0",
+
 ]
 
 [tool.pyright]
@@ -48,7 +46,7 @@ stubPath = "src/stubs"
 reportMissingImports = "error"
 reportMissingTypeStubs = false
 
-pythonVersion = "3.11"
+pythonVersion = "3.10"
 
 executionEnvironments = [
   { root = "src" }

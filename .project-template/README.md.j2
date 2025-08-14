@@ -1,7 +1,6 @@
-# Data Lakehouse Infrastructure as Code Framework
+# {{ project_title | default('project', false) }}
 
-This project is a framework to build a data lakehouse infrastructure using AWS CDK with Python.
-
+{{ project_description | default('project description', false) }}
 
 ## Overview
 
@@ -13,9 +12,9 @@ This project is a framework to build a data lakehouse infrastructure using AWS C
 
 ## Project Configuration
 
-- **Python Version**: 3.10 (compatible with 3.10+)
+- **Python Version**: {{ python_version | default(3.10, false) }} (compatible with {{ requires_python_version | default(3.10, false) }}+)
 - **Package Management**: [UV](https://docs.astral.sh/uv/)
-- **Project Name**: data_lakehouse_infra
+- **Project Name**: {{ project_name | default('project', false) }}
 
 ## Development Tools
 
@@ -36,7 +35,7 @@ Description TBD
 
 ```bash
 # Clone the repository
-git https://github.com/ByteStreamHub/py-base-project.git
+git clone {{ project_git_repo }}
 cd your-project
 
 # Install dependencies and configure development environment
