@@ -1,28 +1,26 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        stages: [pre-commit]  # Only run on commit, not in CI
       - id: check-merge-conflict
+        stages: [pre-commit]
+      - id: debug-statements
+        stages: [pre-commit]
+      - id: detect-private-key
+        stages: [pre-commit, pre-push, manual]
+      - id: check-toml
+        stages: [pre-commit, manual]
 
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.13.0
+    rev: v4.8.3
     hooks:
       - id: commitizen
-        stages: [commit-msg]
+        stages: [commit-msg, manual]
 
-  - repo: local
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.2.0
     hooks:
-      - id: lint
-        name: Lint with Ruff and Pyright
-        entry: make
-        args: [lint]
-        language: system
-        pass_filenames: false
-
-      - id: test
-        name: Run Tests with Coverage
-        entry: make
-        args: [test]
-        language: system
-        pass_filenames: false
+    -   id: add-trailing-comma
+        stages: [pre-commit, manual]
