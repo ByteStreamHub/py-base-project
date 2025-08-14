@@ -10,35 +10,25 @@ jobs:
     name: Validate Changes
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-      
-      - name: Install UV
+          python-version: "3.10"
+
+      - name: Set up environment
         run: |
-          make install-uv
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          make install
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
-      - name: Set up virtual environment
-        run: |
-          make local-dev-config
-          source .venv/bin/activate
-      
-      - name: Install dependencies
-        run: make install
-      
-      - name: Run Ruff Check
+
+      - name: Run Project Check
         run: make check
-      
-      - name: Run Pytest with coverage
-        run: make test
-  
+
   auto-merge:
     name: Auto-merge to Main
     needs: validate
@@ -46,7 +36,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
-    
+
     steps:
       - name: Auto-merge
         if: github.event.pull_request.user.login != 'dependabot[bot]'

@@ -1,0 +1,31 @@
+project_name: py_base_project
+project_title: Python Base Project
+project_description: This is a template for Python projects.
+project_git_repo: https://github.com/ByteStreamHub/py-base-project.git
+author:
+  name: The ByteStream Hub
+  email: thiago@thir.info
+maintainer:
+    name: Thiago Augusto Dias
+    email: thiago@thir.info
+
+python_version: "3.10"  # 3.10 to keep compatibility with AWS resources but depending on the use case, 3.11, 3.12, 3.13
+requires_python_version: "3.10"
+dependencies:
+  - "jinja2>=3.1.6"
+  - "structlog>=25.4.0"
+dev_dependencies:
+  - "pyright>=1.1.403"
+  - "commitizen>=4.8.3"
+  - "pre-commit>=4.2.0"
+  - "pytest-cov>=6.2.1"
+  - "setuptools>=61.0"
+  - "pytest>=8.4.1"
+  - "ruff>=0.12.7"
+  - "git-changelog>=1.0.0"
+
+project_format_standards:
+  line_length: 100
+  docstring_code_line_length: 60
+  quote_style: "double"
+  indent_style: "space"

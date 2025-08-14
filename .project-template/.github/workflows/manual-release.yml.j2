@@ -42,6 +42,11 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           make install
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      {% raw %}
+
+      - name: Build Project
+        if: ${{ github.event.inputs.build_and_upload == 'true' }}
+        run: make build
 
       - name: Configure Git
         run: |
@@ -67,3 +72,18 @@ jobs:
             echo "Invalid version_bump input"
             exit 1
           fi
+
+      - name: Configure AWS credentials
+        if: ${{ github.event.inputs.build_and_upload == 'true' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Upload to S3
+        if: ${{ github.event.inputs.build_and_upload == 'true' }}
+        run: |
+          echo "Uploading wheel files to S3 bucket"
+          aws s3 cp dist/*.whl s3://${{ vars.S3_BUCKET_NAME }}
+      {% endraw %}

@@ -1,0 +1,73 @@
+"""Project configuration."""
+
+from typing import Any
+
+# Company information
+COMPANY: dict[str, str] = {"name": "{{ company_name }}", "short_name": "{{ company_short_name }}"}
+
+# Project information
+PROJECT: dict[str, str] = {"name": "{{ project_name }}", "short_name": "{{ project_short_name }}", "owner": "{{ project_owner }}"}
+
+# Environment information
+ENVIRONMENTS: dict[str, Any] = {
+    "234567890123": {  # Add the development account id here
+        "name": "development",
+        "short_name": "dev",
+        "region": "us-east-1",
+    },
+    "134567890123": {  # Add the production account id here
+        "name": "production",
+        "short_name": "prod",
+        "region": "us-east-1",
+    },
+    "default": {  # Set the default configuration here
+        "name": "development",
+        "short_name": "dev",
+        "region": "us-east-1",
+    },
+}
+
+RESOURCE_INSTANCE_NAMING_CONFIG: dict[str, list[str]] = {
+    "general": [
+        "{ENVIRONMENT_SHORT_NAME}",
+        COMPANY["short_name"],
+        PROJECT["short_name"],
+        "{RESOURCE_SHORT_NAME}",
+        "{NAME}",
+        "{ENVIRONMENTS_ACCOUNT_ID}",
+    ],
+    "cloudwatch": [
+        "{ENVIRONMENT_SHORT_NAME}",
+        PROJECT["short_name"],
+    ],
+    "glue_database": [
+        "{ENVIRONMENT_SHORT_NAME}",
+        COMPANY["short_name"],
+        PROJECT["short_name"],
+        "{RESOURCE_SHORT_NAME}",
+        "{NAME}",
+    ],
+    "secrets": [
+        "{ENVIRONMENT_SHORT_NAME}",
+        COMPANY["short_name"],
+        PROJECT["short_name"],
+        "{RESOURCE_SHORT_NAME}",
+        "{NAME}",
+    ],
+}
+
+# Storage
+STORAGE_NAMING_CONFIG: dict[str, dict[str, str] | Any] = {
+    "raw": "raw",
+    "stage": "stage",
+    "analytics": "analytics",
+    "transient": "landing-zone",
+    "general_purposes": "assets",
+}
+
+# Tags to be applied to all resources
+BASE_TAGS: dict[str, str] = {
+    "Project": PROJECT["name"],
+    "Owner": PROJECT["owner"],
+    "Environment": "{ENVIRONMENT_SHORT_NAME}",
+}

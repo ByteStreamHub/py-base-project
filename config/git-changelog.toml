@@ -3,19 +3,16 @@ provider="github"
 template="keepachangelog"
 sections = [
     "build",
-    "deps",
-    "feat",
-    "fix",
-    "refactor",
     "chore",
-    "revert",
-    "ref",
-    "refactor",
-    "perf",
     "ci",
     "deps",
     "doc",
-    "docs",
-    "style",
+    "feat",
+    "fix",
+    "revert",
+    "refactor",
     "test"
 ]
+versioning="semver"
+parse_trailers=true
+parse_refs=false
