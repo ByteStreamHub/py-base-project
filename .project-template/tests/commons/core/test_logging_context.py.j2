@@ -1,0 +1,107 @@
+import logging
+import pytest
+from unittest.mock import MagicMock, ANY
+
+from commons.core import ContextFilter, LoggingContext
+
+
+@pytest.fixture
+def log_record() -> logging.LogRecord:
+    """Provides a basic LogRecord instance for tests."""
+    return logging.LogRecord(
+        name="test_logger",
+        level=logging.INFO,
+        pathname="/fake/path",
+        lineno=42,
+        msg="This is a test message",
+        args=(),
+        exc_info=None
+    )
+
+
+@pytest.fixture
+def mock_logger() -> MagicMock:
+    """Provides a MagicMock instance of a logger."""
+    return MagicMock(spec=logging.Logger)
+
+
+class TestContextFilter:
+    """Groups all tests related to the ContextFilter class."""
+
+    def test_init(self):
+        """Ensures the context dictionary is stored correctly."""
+        context = {"request_id": "xyz-123"}
+        filter_instance = ContextFilter(context)
+        assert filter_instance.context is context
+
+    def test_filter_adds_attributes_to_record(self, log_record):
+        """
+        Tests that the filter correctly adds all context items as attributes
+        to the log record.
+        """
+        context = {"user_id": 123, "session_id": "abc"}
+        filter_instance = ContextFilter(context)
+        
+        # The filter should return True to allow the record to be processed
+        assert filter_instance.filter(log_record) is True
+        
+        # Verify that the attributes were added
+        assert hasattr(log_record, "user_id")
+        assert hasattr(log_record, "session_id")
+        assert log_record.user_id == 123
+        assert log_record.session_id == "abc"
+
+    def test_filter_with_empty_context(self, log_record):
+        """
+        Tests that the filter handles an empty context dictionary gracefully
+        and doesn't add any attributes.
+        """
+        initial_attrs = list(log_record.__dict__.keys())
+        filter_instance = ContextFilter({})
+        
+        assert filter_instance.filter(log_record) is True
+        
+        # Verify no new attributes were added
+        final_attrs = list(log_record.__dict__.keys())
+        assert initial_attrs == final_attrs
+
+
+class TestLoggingContext:
+    """Groups all tests related to the LoggingContext class."""
+
+    def test_init_with_initial_context(self, mock_logger):
+        """Tests initialization with a logger and some context."""
+        with LoggingContext(logger=mock_logger, request_id="req-1") as logging_context:
+            assert logging_context.logger is mock_logger
+            assert logging_context.context == {"request_id": "req-1"}
+            assert isinstance(logging_context.filter, ContextFilter)
+
+    def test_init_without_logger(self):
+        """Tests that a default logger is created if none is provided."""
+        with LoggingContext() as 
+        assert isinstance(logging_context.logger, logging.Logger)
+        assert logging_context.context == {}
+        
+    def test_update_context(self, mock_logger):
+        """Tests that the context can be updated dynamically."""
+        with LoggingContext(logger=mock_logger, user_id=123) as logging_context:
+            logging_context.update_context(user_id=456, new_key="value")
+            assert logging_context.context == {"user_id": 456, "new_key": "value"}
+
+    def test_context_manager_lifecycle(self, mock_logger):
+        """Tests the full '__enter__' and '__exit__' lifecycle"""
+        with LoggingContext(logger=mock_logger) as ctx:
+            mock_logger.addFilter.assert_called_once_with(ctx.filter)
+            assert isinstance(ctx, LoggingContext)
+            mock_logger.removeFilter.assert_not_called()
+        mock_logger.removeFilter.assert_called_once_with(ctx.filter)
+
+    def test_context_manager_cleans_up_on_exception(self, mock_logger):
+        """
+        Ensures that the filter is removed even if an error occurs inside the 'with' block.
+        """
+        with pytest.raises(ValueError, match="Simulated error"):
+            with LoggingContext(logger=mock_logger) as ctx:
+                mock_logger.addFilter.assert_called_once()
+                raise ValueError("Simulated error")
+        mock_logger.removeFilter.assert_called_once()
