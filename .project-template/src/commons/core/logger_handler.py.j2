@@ -209,14 +209,18 @@ class ContextFilter(logging.Filter):
 
     def __init__(self, context_dict: dict[str, Any]) -> None:
         super().__init__()
-        self.context: dict[str, Any] = context_dict
+        self.context: dict[str, Any] = {"application": context_dict}
+
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Filter method that injects context into log records.
+        
+        :param record: The log record to be processed
+        :type record: logging.LogRecord
+        :return: Always returns True to allow the record to be processed
+        :rtype: bool
         """
-        This methods is called for each log, adding the context to the
-        record object before it is formatted and shown"
-        """
-        for key, value in self.context.items():
+        for key, value in self.context["application"].items():
             setattr(record, key, value)
 
         return True
@@ -230,7 +234,7 @@ class LoggingContext:
         **initial_context: Optional[dict[str, Any]] = None
     ) -> None:
         self.logger: logging.Logger = logger or get_logger()
-        self.context: Dict[str, Any] = initial_context or {}
+        self.context: dict[str, Any] = initial_context or {}
         self.filter: ContextFilter = ContextFilter(self.context)
 
     def __enter__(self) -> "self":
@@ -246,4 +250,20 @@ class LoggingContext:
         self.logger.removeFilter(self.filter)
 
     def update_context(self, **new_context: dict[str, Any]) -> None:
+        """Update the logging context with new values.
+        
+        :param new_context: New context key-value pairs to add/update
+        :type new_context: dict[str, Any]
+        """
+        old_context = self.context.copy()
         self.context.update(new_context)
+        
+        # Log the context update for debugging
+        self.logger.debug(
+            "Updated logging context",
+            extra={
+                "old_context": old_context,
+                "new_context": new_context,
+                "current_context": self.context
+            }
+        )
