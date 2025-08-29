@@ -1,9 +1,10 @@
 """Basic logging class for logging in JSON format."""
 
 import logging
+import types
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, Type, TypeVar
 from uuid import uuid4
 
 import structlog
@@ -201,3 +202,48 @@ class Logger:
         :return: This method does not return a value.
         :rtype: None
         """
+
+
+class ContextFilter(logging.Filter):
+    """This is a filter which injects a context dictionary into LogRecords"""
+
+    def __init__(self, context_dict: dict[str, Any]) -> None:
+        super().__init__()
+        self.context: dict[str, Any] = context_dict
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        This methods is called for each log, adding the context to the
+        record object before it is formatted and shown"
+        """
+        for key, value in self.context.items():
+            setattr(record, key, value)
+
+        return True
+
+
+class LoggingContext:
+    """Context manager to add contextual information to logs."""
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        **initial_context: Optional[dict[str, Any]] = None
+    ) -> None:
+        self.logger: logging.Logger = logger or get_logger()
+        self.context: Dict[str, Any] = initial_context or {}
+        self.filter: ContextFilter = ContextFilter(self.context)
+
+    def __enter__(self) -> "self":
+        self.logger.addFilter(self.filter)
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[types.TracebackType],
+    ) -> None:
+        self.logger.removeFilter(self.filter)
+
+    def update_context(self, **new_context: dict[str, Any]) -> None:
+        self.context.update(new_context)
