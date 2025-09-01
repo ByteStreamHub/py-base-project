@@ -1,6 +1,6 @@
 # Environment variables
 SHELL := /bin/bash
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := clean
 
 # PYTHON
 PYTHON_VERSION := {{ python_version | default(3.10, false) }}
@@ -30,135 +30,53 @@ PACKAGE_MANAGER_RUN 		= ${PACKAGE_MANAGER} run
 RUFF 						= ${PACKAGE_MANAGER_RUN} ruff --config $(RUFF_CONFIG_FILE)
 
 ## Pyright linter
-PYRIGHT						= ${PACKAGE_MANAGER_RUN} pyright -p ${SOURCE_DIR}
+PYRIGHT						= ${PACKAGE_MANAGER_RUN} pyright
 
-# TOOL EXECUTOR
+.PHONY: check check-local clean install install-dev lint test build
 
-## git-changelog
-GIT-CHANGELOG-PV-TE			= ${PACKAGE_MANAGER_RUN} git-changelog --style conventional
-GIT-CHANGELOG-TE			= ${GIT-CHANGELOG-PV-TE} --output CHANGELOG.md --in-place
+check: clean lint test
 
-## pre-commit
-PRE-COMMIT-RUN-ALL-FILES	= ${PACKAGE_MANAGER_RUN} pre-commit run --all-files
-
-.PHONY: help check clean format generate-docs generate-docs-local install changelog-generate changelog-preview local-config install-all install-python install-uv lint print-header print-footer test release release-major release-minor release-patch pre-commit-all-files build
-
-help:
-	@echo ""
-	@echo "Commons module commands"
-	@echo "Using python: $(PYTHON_VERSION)"
-	@echo ""
-	@echo "Development:"
-	@echo "  make install        	: Clean install of dependencies"
-	@echo "  make install-all    	: Clean install of dependencies (alias for install)"
-	@echo "  make install-python 	: Install Python"
-	@echo "  make install-uv     	: Install UV package manager"
-	@echo "  make local-config	: Configure development environment"
-	@echo ""
-	@echo "Code Quality:"
-	@echo "  make format         	: Format code using Ruff"
-	@echo "  make lint           	: Run linters"
-	@echo "  make test           	: Run tests with coverage"
-	@echo "  make check          	: Run format, lint, and test"
-	@echo "  make clean          	: Clean project artifacts"
-	@echo "  make build          	: Build the project and create version and latest files"
-	@echo ""
-	@echo "Project Management:"
-	@echo "  make changelog-generate 	: Generate changelog from git history using git-changelog"
-	@echo "  make changelog-preview 	: Preview changelog without writing to file"
-	@echo "  make generate-docs 		: Generate the project documentation using mkdocs"
-	@echo "  make generate-docs-local 	: Generate the project documentation using mkdocs -- local for tests"
-	@echo ""
-
-changelog-generate: print-header
-	@echo "Generating changelog..."
-	@${GIT-CHANGELOG-TE}
-	@echo ""
-	@echo "... changelog generation finalized. check CHANGELOG.md!"
-	@make print-footer
-
-changelog-preview: print-header
-	@echo "Previewing changelog (without writing to file)..."
-	@${GIT-CHANGELOG-PV-TE}
-	@echo ""
-	@echo "... changelog preview completed!"
-	@make print-footer
-
-check: clean format lint
+check-local: clean
+	@${RUFF} format ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v
+	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v --fix
+	@${PRE-COMMIT-RUN-ALL-FILES}
+	@make lint
 
 .ONESHELL:
-clean: print-header
+clean:
+	@$(call do_print_header)
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@find . -type f -name "*.pyc" -delete
 	@rm -rf .pytest_cache build dist *.egg-info .coverage coverage.xml
-	@make print-footer
+	@$(call do_print_footer)
 
 .ONESHELL:
-local-config: print-header
+install:
+	@$(call do_print_header)
 	@echo "Configuring environment..."
-	@echo "### Install package manager"
-	# placeholder
 	@echo "### Install Python"
-	@make install-python
+	@${PACKAGE_MANAGER} python install ${PYTHON_VERSION}
 	@echo "### Configure virtual environment"
 	@${PACKAGE_MANAGER} venv ${VENV_DIR} --allow-existing --trusted-host localhost --color auto --python ${PYTHON_VERSION}
 	@echo "### Install project dependencies"
+	@echo ""
+	@${PACKAGE_MANAGER} sync --link-mode=copy
+	@echo ""
+	@echo "...Environment configured!"
+	@$(call do_print_footer)
+
+install-dev:
+	@$(call do_print_header)
 	@make install
-	@echo ""
-	@echo "...DEV environment configured!"
-	@make print-footer
-
-format: print-header
-	@echo "Starting ruff check..."
-	@echo ""
-	@${RUFF} format ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v
-	@${RUFF} check ${SOURCE_DIR} ${SCRIPTS_DIR} ${TEST_DIR} ${DOCS_DIR} -v --fix
-	@echo ""
-	@echo "...ending ruff check!"
-	@make print-footer
-
-generate-docs:  print-header
-	@echo "Generating docs for GitHub Pages..."
-	@echo ""
-	@${PACKAGE_MANAGER_RUN} mkdocs gh-deploy -b site --force --clean
-	@echo ""
-	@echo "...ending generate docs! Documentation deployed to GitHub Pages."
-	@make print-footer
-
-generate-docs-local:  print-header
-	@echo "Generating docs locally..."
-	@echo ""
-	@${PACKAGE_MANAGER_RUN} mkdocs build --clean -d local-dev/local-mkdocs
-	@echo ""
-	@echo "...ending generate docs! Documentation available in local-dev/local-mkdocs directory."
-	@make print-footer
-
-install: clean print-header
-	@echo "Install dependencies using package manager..."
-	@echo ""
-	@${PACKAGE_MANAGER} sync --link-mode=copy --upgrade
-	@echo ""
-	@echo "..Install and configure pre-commit...."
+	@echo "### Install project dev dependencies"
 	@echo ""
 	@${PACKAGE_MANAGER_RUN} pre-commit install
-	@echo ""
-	@echo "..pre-commit installed and configured...."
-	@echo ""
-	@echo "...ending install dependencies!"
-	@make print-footer
+	@${PACKAGE_MANAGER} sync --link-mode=copy --upgrade
+	@echo "...DEV environment configured!"
+	@$(call do_print_footer)
 
-install-all: install
-
-install-python:
-	@${PACKAGE_MANAGER} python install ${PYTHON_VERSION}
-
-install-uv: print-header
-	@echo "Installing UV..."
-	@curl -LsSf https://astral.sh/uv/install.sh | sh
-	@echo "...UV installed."
-	@make print-footer
-
-lint: print-header
+lint:
+	@$(call do_print_header)
 	@echo "Starting ruff check..."
 	@echo ""
 	@echo "SRC :: ${SOURCE_DIR}"
@@ -166,108 +84,42 @@ lint: print-header
 	@${PYRIGHT}
 	@echo ""
 	@echo "...ending ruff check!"
-	@make print-footer
+	@$(call do_print_footer)
 
-pre-commit-all-files: print-header
-	@echo "pre-commit run for all files for validation..."
-	@${PRE-COMMIT-RUN-ALL-FILES} --retry-on-failure
-	@echo "...pre-commit run for all files for validation executed!"
-	@make print-footer
-
-print-header:
-	@echo ""
-	@echo "Starting..."
-	@echo "------------------------------------------------------------------"
-	@echo ""
-
-print-footer:
-	@echo ""
-	@echo "... and done!"
-	@echo "=================================================================="
-	@echo ""
-
-test: print-header
+test:
+	@$(call do_print_header)
 	@echo "Running unit tests..."
 	@echo ""
-	@PYTHONPATH=src ${PACKAGE_MANAGER_RUN} pytest -v -s --log-level=DEBUG --color=auto --code-highlight=yes --cov=${SOURCE_DIR} --cov-report=xml --cov-fail-under=80
+	@PYTHONPATH=src ${PACKAGE_MANAGER_RUN} pytest -v -s --log-level=DEBUG --color=auto --code-highlight=yes --cov=${SOURCE_DIR} --cov-report=xml --cov-fail-under=80 --cov-report=term
 	@echo ""
 	@echo "...ending unit tests!"
-	@make print-footer
-
-# Common release function to avoid code duplication
-# Using --no-verify flag with git commit commands to bypass pre-commit hooks during automated releases
-# This prevents conflicts between pre-commit hooks and the release process
-define do_release
-	@echo "Running tests before release..."
-	@make test || { echo "Tests failed! Aborting release."; exit 1; }
-	@echo ""
-	@echo "Bumping $(1) version..."
-	@${PACKAGE_MANAGER} version --bump $(1) || { echo "Version bump failed! Aborting release."; exit 1; }
-	@NEW_RELEASE_VERSION=$$(${PACKAGE_MANAGER} version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-	@echo "New version: $$NEW_RELEASE_VERSION"
-	@echo "Creating temporary commit for version bump..."
-	@git add pyproject.toml || { echo "Git add failed! Aborting release."; exit 1; }
-	@git commit --no-verify -m "build(release): bump version to $$NEW_RELEASE_VERSION" || { echo "Git commit failed! Aborting release."; exit 1; }
-	@echo "Generating changelog with version $$NEW_RELEASE_VERSION..."
-	@${GIT-CHANGELOG-TE} -B $$NEW_RELEASE_VERSION || { echo "Changelog generation failed! Aborting release."; exit 1; }
-	@echo "Committing changelog..."
-	@git add CHANGELOG.md || { echo "Git add failed! Aborting release."; exit 1; }
-	@git commit --amend --no-verify -m "build(release): bump version to $$NEW_RELEASE_VERSION and generate changelog" || { echo "Git commit failed! Aborting release."; exit 1; }
-	@echo "Creating version tag..."
-	@git tag -f v$$NEW_RELEASE_VERSION || { echo "Git tag failed! Aborting release."; exit 1; }
-	@git tag -f latest || { echo "Git tag latest failed! Aborting release."; exit 1; }
-	@echo "Pushing changes and tags..."
-	@git push origin main || { echo "Git push failed! Aborting release."; exit 1; }
-	@echo "Pushing tags..."
-	@git push origin v$$NEW_RELEASE_VERSION --force || { echo "Git push version tag failed! Aborting release."; exit 1; }
-	@git push origin latest --force || { echo "Git push latest tag failed! Aborting release."; exit 1; }
-	@echo ""
-	@echo "...ending release!"
-endef
+	@$(call do_print_footer)
 
 .ONESHELL:
-release: print-header
-	@echo "Starting release (minor version bump)..."
-	@echo ""
-	$(call do_release,minor)
-	@make print-footer
-
-.ONESHELL:
-release-major: print-header
-	@echo "Starting release (major version bump)..."
-	@echo ""
-	$(call do_release,major)
-	@make print-footer
-
-.ONESHELL:
-release-minor: print-header
-	@echo "Starting release (minor version bump)..."
-	@echo ""
-	$(call do_release,minor)
-	@make print-footer
-
-.ONESHELL:
-release-patch: print-header
-	@echo "Starting release (patch version bump)..."
-	@echo ""
-	$(call do_release,patch)
-	@make print-footer
-
-.ONESHELL:
-build: print-header
+build:
+	@$(call do_print_header)
 	@echo "Building project..."
 	@echo ""
 	@${PACKAGE_MANAGER} build
 	@echo ""
-	@echo "Creating version and latest files..."
-	@VERSION=$$(${PACKAGE_MANAGER} version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-	@echo "Version: $$VERSION"
-	@cp dist/python_base_project-$$VERSION.tar.gz dist/python_base_project-$$VERSION
-	@cp dist/python_base_project-$$VERSION dist/python_base_project-latest.whl
+	@echo "Creating latest file..."
+	@cp dist/*.whl dist/{{ project_name }}-latest.whl
 	@echo ""
 	@echo "Build completed successfully!"
-	@echo "Created whl files:"
-	@echo "  - dist/python_base_project-$$VERSION"
-	@echo "  - dist/python_base_project-latest"
-	@make print-footer
+	@$(call do_print_footer)
+
+define do_print_header
+	@echo ""
+	@echo "Starting..."
+	@echo "------------------------------------------------------------------"
+	@echo ""
+endef
+
+define do_print_footer
+	@echo ""
+	@echo "... and done!"
+	@echo "=================================================================="
+	@echo ""
+endef
+
 {{ "\n" }}
